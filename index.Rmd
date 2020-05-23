@@ -1,0 +1,75 @@
+---
+title: "Dissertation Proposal MLM Analysis"
+author: "Jim Wright"
+date: "5/23/2020"
+output: 
+html_document: 
+    toc: true
+    toc_float: true
+    theme: "spacelab"
+    highlight: "tango"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE,
+                      echo = TRUE,
+                      fig.width = 10,
+                      fig.height = 10,
+                      dev.args = list(bg="transparent"))
+
+library(tidyverse)
+require(nlme)
+library(here)
+library(rio)
+
+data <- import(here("data", "mlm_data.csv"),
+               setclass = "tbl_df") 
+
+head(data)
+```
+
+
+### Null (unconditional) model
+```{r}
+d.Null <- lme(DV~1,random=~1|Case,data=data,
+control=list(opt="optim"),na.action="na.omit")
+
+coefficients(d.Null)
+intervals(d.Null)
+summary(d.Null)
+```
+
+
+### Model with random intercept and change in level (with an autocorrelation component)
+```{r}
+d.Level <- lme(DV~1+Phase,random=~1|Case,data=data,
+correlation=corAR1(form=~1|Case),control=list(opt="optim"),na.action="na.omit")
+
+coefficients(d.Level)
+intervals(d.Level)
+summary(d.Level)
+```
+
+
+### Model with random intercept and change in slope (with an autocorrelation component)
+```{r}
+d.Time <- lme(DV~1+Time_CTR,random=~1|Case,data=data,
+correlation=corAR1(form=~1|Case),control=list(opt="optim"),na.action="na.omit")
+# Rename variables and use only complete cases
+coefficients(d.Time)
+intervals(d.Time)
+summary(d.Time)
+```
+
+
+### Model with random intercept and change in level/slope in Tx (with autocorrelation)
+```{r}
+d.Model <- lme(DV~1+Phase+Time_PhaseCTR,random=~1|Case,data=data,
+correlation=corAR1(form=~1|Case),control=list(opt="optim"),na.action="na.omit")
+# Rename variables and use only complete cases
+coefficients(d.Model)
+intervals(d.Model)
+summary(d.Model)
+```
+
